@@ -1,3 +1,10 @@
+const groupsToCheck = [
+  { name: "NOLA", id: 12739645 },
+  { name: "ENOMOTTO-IKKA", id: 35488582 },
+  { name: "LA-EME", id: 35560914 },
+  { name: "KADDIN", id: 16140130 }
+];
+
 async function searchUser() {
   const username = document.getElementById("username").value.trim();
   const resultDiv = document.getElementById("result");
@@ -10,7 +17,7 @@ async function searchUser() {
   resultDiv.innerHTML = "Loading...";
 
   try {
-    // Step 1: Get user ID (with proxy to fix CORS)
+    // Get user ID
     const res = await fetch("https://corsproxy.io/?https://users.roblox.com/v1/usernames/users", {
       method: "POST",
       headers: {
@@ -22,8 +29,6 @@ async function searchUser() {
       })
     });
 
-    if (!res.ok) throw new Error("Failed to fetch user");
-
     const data = await res.json();
 
     if (!data.data || data.data.length === 0) {
@@ -33,17 +38,42 @@ async function searchUser() {
 
     const user = data.data[0];
 
-    // Step 2: Get avatar
+    // Get avatar
     const avatarRes = await fetch(
       `https://corsproxy.io/?https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${user.id}&size=150x150&format=Png`
     );
 
-    if (!avatarRes.ok) throw new Error("Failed to fetch avatar");
-
     const avatarData = await avatarRes.json();
     const avatarUrl = avatarData.data[0].imageUrl;
 
-    // Step 3: Display result
+    // Get user's groups
+    const groupRes = await fetch(
+      `https://corsproxy.io/?https://groups.roblox.com/v2/users/${user.id}/groups/roles`
+    );
+
+    const groupData = await groupRes.json();
+    const userGroups = groupData.data || [];
+
+    // Build group results
+    let groupHTML = "<h3>Group Check</h3>";
+
+    groupsToCheck.forEach(group => {
+      const found = userGroups.find(g => g.group.id === group.id);
+
+      if (!found) {
+        groupHTML += `<p style="color:lime;">${group.name}: Clean</p>`;
+      } else {
+        const rank = found.role.rank;
+
+        if (rank >= 200) {
+          groupHTML += `<p style="color:red;">${group.name}: High Rank (${found.role.name})</p>`;
+        } else {
+          groupHTML += `<p style="color:yellow;">${group.name}: Member (${found.role.name})</p>`;
+        }
+      }
+    });
+
+    // Display everything
     resultDiv.innerHTML = `
       <img src="${avatarUrl}" style="border-radius:50%; box-shadow:0 0 20px red;">
       <h2>${user.name}</h2>
@@ -51,8 +81,14 @@ async function searchUser() {
       <a href="https://www.roblox.com/users/${user.id}/profile" target="_blank">
         <button>View Profile</button>
       </a>
+      ${groupHTML}
     `;
 
+  } catch (err) {
+    console.error(err);
+    resultDiv.innerHTML = "Error loading user.";
+  }
+}
   } catch (err) {
     console.error(err);
     resultDiv.innerHTML = "Error loading user. Try again.";
