@@ -57,7 +57,6 @@ img {
   box-shadow: 0 0 20px red;
 }
 
-/* SECTION TITLES */
 .section-title {
   margin-top: 20px;
   font-size: 13px;
@@ -65,7 +64,6 @@ img {
   text-align: left;
 }
 
-/* GRID */
 .group-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -73,7 +71,6 @@ img {
   margin-top: 8px;
 }
 
-/* CARD */
 .group-card {
   padding: 8px;
   border-radius: 8px;
@@ -82,15 +79,7 @@ img {
   border: 1px solid rgba(255,255,255,0.05);
 }
 
-/* COLORS */
-.clean {
-  border-left: 3px solid #00ff7b;
-}
-
-.neutral {
-  border-left: 3px solid #ffd000;
-}
-
-.opp {
-  border-left: 3px solid #ff3b3b;
-}
+/* color bars */
+.clean { border-left: 3px solid #00ff7b; }
+.neutral { border-left: 3px solid #ffd000; }
+.opp { border-left: 3px solid #ff3b3b; }
