@@ -33,7 +33,7 @@ async function searchUser() {
   resultDiv.innerHTML = "Scanning...";
 
   try {
-    // GET USER
+    // USER
     const res = await fetch("https://corsproxy.io/?https://users.roblox.com/v1/usernames/users", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
@@ -49,36 +49,33 @@ async function searchUser() {
 
     const user = data.data[0];
 
-    // AVATAR (PROXY + FALLBACK FIX)
-    let avatarUrl = "";
+    // USER DETAILS (CREATED DATE)
+    const userInfoRes = await fetch(
+      `https://corsproxy.io/?https://users.roblox.com/v1/users/${user.id}`
+    );
+    const userInfo = await userInfoRes.json();
 
+    const created = new Date(userInfo.created).toLocaleDateString();
+
+    // FRIEND COUNT
+    let friendCount = 0;
     try {
-      const avatarRes = await fetch(
-        `https://corsproxy.io/?https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${user.id}&size=150x150&format=Png&isCircular=true`
+      const friendsRes = await fetch(
+        `https://corsproxy.io/?https://friends.roblox.com/v1/users/${user.id}/friends/count`
       );
+      const friendsData = await friendsRes.json();
+      friendCount = friendsData.count || 0;
+    } catch {}
 
-      if (!avatarRes.ok) throw new Error();
-
-      const avatarData = await avatarRes.json();
-      avatarUrl = avatarData.data[0]?.imageUrl;
-
-    } catch {
-      try {
-        const avatarRes2 = await fetch(
-          `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${user.id}&size=150x150&format=Png&isCircular=true`
-        );
-
-        const avatarData2 = await avatarRes2.json();
-        avatarUrl = avatarData2.data[0]?.imageUrl;
-
-      } catch {
-        avatarUrl = "";
-      }
-    }
-
-    if (!avatarUrl) {
-      avatarUrl = "https://via.placeholder.com/150";
-    }
+    // GET FRIENDS LIST (LIMITED)
+    let friends = [];
+    try {
+      const listRes = await fetch(
+        `https://corsproxy.io/?https://friends.roblox.com/v1/users/${user.id}/friends`
+      );
+      const listData = await listRes.json();
+      friends = listData.data || [];
+    } catch {}
 
     // GROUPS
     const groupRes = await fetch(
@@ -88,12 +85,48 @@ async function searchUser() {
     const groupData = await groupRes.json();
     const userGroups = groupData.data || [];
 
+    // CHECK FRIEND CONNECTIONS
+    async function countConnections(groupIds) {
+      let count = 0;
+
+      for (let friend of friends.slice(0, 10)) { // limit for speed
+        try {
+          const res = await fetch(
+            `https://corsproxy.io/?https://groups.roblox.com/v2/users/${friend.id}/groups/roles`
+          );
+          const data = await res.json();
+
+          if (data.data.some(g => groupIds.includes(String(g.group.id)))) {
+            count++;
+          }
+        } catch {}
+      }
+
+      return count;
+    }
+
+    const oppIds = Object.keys(OPPS);
+    const connectionCount = await countConnections(oppIds);
+
+    // AVATAR
+    let avatarUrl = "";
+    try {
+      const avatarRes = await fetch(
+        `https://corsproxy.io/?https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${user.id}&size=150x150&format=Png`
+      );
+      const avatarData = await avatarRes.json();
+      avatarUrl = avatarData.data[0]?.imageUrl;
+    } catch {}
+
+    if (!avatarUrl) {
+      avatarUrl = "https://via.placeholder.com/150";
+    }
+
     function buildSection(title, groupSet, className) {
       let html = `<div class="section-title">${title}</div><div class="group-grid">`;
 
       for (let id in groupSet) {
         const found = userGroups.find(g => g.group.id == id);
-
         if (found) {
           html += `<div class="group-card ${className}">${groupSet[id]}</div>`;
         }
@@ -103,11 +136,18 @@ async function searchUser() {
       return html;
     }
 
-    // DISPLAY
+    // CLEAN UI OUTPUT
     resultDiv.innerHTML = `
       <img src="${avatarUrl}">
       <h2>${user.name}</h2>
-      <p>ID: ${user.id}</p>
+      
+      <div style="opacity:0.7; font-size:12px; margin-bottom:10px;">
+        Joined: ${created} • Friends: ${friendCount}
+      </div>
+
+      <div style="margin-bottom:10px; font-size:13px;">
+        Connections in flagged groups: <b>${connectionCount}</b>
+      </div>
 
       ${buildSection("Clean", CLEAN, "clean")}
       ${buildSection("Neutral", NEUTRAL, "neutral")}
