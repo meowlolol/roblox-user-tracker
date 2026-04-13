@@ -10,8 +10,8 @@ async function searchUser() {
   resultDiv.innerHTML = "Loading...";
 
   try {
-    // Step 1: Get user ID
-    const res = await fetch("https://users.roblox.com/v1/usernames/users", {
+    // Step 1: Get user ID (with proxy to fix CORS)
+    const res = await fetch("https://corsproxy.io/?https://users.roblox.com/v1/usernames/users", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -35,7 +35,7 @@ async function searchUser() {
 
     // Step 2: Get avatar
     const avatarRes = await fetch(
-      `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${user.id}&size=150x150&format=Png`
+      `https://corsproxy.io/?https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${user.id}&size=150x150&format=Png`
     );
 
     if (!avatarRes.ok) throw new Error("Failed to fetch avatar");
@@ -43,7 +43,7 @@ async function searchUser() {
     const avatarData = await avatarRes.json();
     const avatarUrl = avatarData.data[0].imageUrl;
 
-    // Step 3: Display
+    // Step 3: Display result
     resultDiv.innerHTML = `
       <img src="${avatarUrl}" style="border-radius:50%; box-shadow:0 0 20px red;">
       <h2>${user.name}</h2>
