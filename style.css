@@ -10,22 +10,28 @@ body {
 
 .container {
   text-align: center;
+  width: 300px;
+}
+
+h1 {
+  margin-bottom: 20px;
 }
 
 input {
   padding: 10px;
+  width: 70%;
   border: none;
   border-radius: 8px;
-  margin-right: 10px;
 }
 
 button {
-  padding: 10px 20px;
+  padding: 10px 15px;
   border: none;
   border-radius: 8px;
-  background: #ff0000;
+  background: red;
   color: white;
   cursor: pointer;
+  margin-top: 10px;
   box-shadow: 0 0 10px red;
 }
 
@@ -35,4 +41,22 @@ button:hover {
 
 #result {
   margin-top: 20px;
+}
+
+.group {
+  margin-top: 10px;
+  padding: 8px;
+  border-radius: 6px;
+}
+
+.green {
+  color: lime;
+}
+
+.yellow {
+  color: yellow;
+}
+
+.red {
+  color: red;
 }
