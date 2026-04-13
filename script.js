@@ -1,9 +1,23 @@
-const groupsToCheck = [
-  { name: "NOLA", id: 12739645 },
-  { name: "ENOMOTTO-IKKA", id: 35488582 },
-  { name: "LA-EME", id: 35560914 },
-  { name: "KADDIN", id: 16140130 }
-];
+const CLEAN = {
+  "35766674": "Murayama Ikka",
+  "13445787": "United Federation",
+  "659233359": "Chasers"
+};
+
+const NEUTRAL = { 
+  "13835630": "Ikeda Ikka",
+  "2727257": "Hydra Bratva",
+  "957196347": "Kozakura Ikka",
+  "953286501": "Tachibana Kai",
+  "673851096": "ZERO"
+};
+
+const OPPS = { 
+  "35488582": "Enomoto Ikka",
+  "1051291555": "Chosen Devils",
+  "777386797": "Sanada Ikka",
+  "12739645": "NOLA"
+};
 
 document.getElementById("searchBtn").addEventListener("click", searchUser);
 
@@ -16,42 +30,25 @@ async function searchUser() {
     return;
   }
 
-  resultDiv.innerHTML = "Loading...";
+  resultDiv.innerHTML = "Scanning...";
 
   try {
-    // Get user ID
-    const res = await fetch(
-      "https://corsproxy.io/?https://users.roblox.com/v1/usernames/users",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          usernames: [username],
-          excludeBannedUsers: false
-        })
-      }
-    );
+    const res = await fetch("https://corsproxy.io/?https://users.roblox.com/v1/usernames/users", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ usernames: [username] })
+    });
 
     const data = await res.json();
-
-    if (!data.data || data.data.length === 0) {
-      resultDiv.innerHTML = "User not found.";
-      return;
-    }
-
     const user = data.data[0];
 
-    // Avatar
     const avatarRes = await fetch(
-      `https://corsproxy.io/?https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${user.id}&size=150x150&format=Png`
+      `https://corsproxy.io/?https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${user.id}&size=150x150`
     );
 
     const avatarData = await avatarRes.json();
     const avatarUrl = avatarData.data[0].imageUrl;
 
-    // Groups
     const groupRes = await fetch(
       `https://corsproxy.io/?https://groups.roblox.com/v2/users/${user.id}/groups/roles`
     );
@@ -59,36 +56,37 @@ async function searchUser() {
     const groupData = await groupRes.json();
     const userGroups = groupData.data || [];
 
-    let groupHTML = "<h3>Group Check</h3>";
+    function buildSection(title, groupSet, className) {
+      let html = `<div class="section-title">${title}</div>`;
+      html += `<div class="group-grid">`;
 
-    groupsToCheck.forEach(group => {
-      const found = userGroups.find(g => g.group.id === group.id);
+      for (let id in groupSet) {
+        const found = userGroups.find(g => g.group.id == id);
 
-      if (!found) {
-        groupHTML += `<div class="group green">${group.name}: Clean</div>`;
-      } else {
-        const rank = found.role.rank;
-
-        if (rank >= 200) {
-          groupHTML += `<div class="group red">${group.name}: High Rank (${found.role.name})</div>`;
-        } else {
-          groupHTML += `<div class="group yellow">${group.name}: Member (${found.role.name})</div>`;
+        if (found) {
+          html += `
+            <div class="group-card ${className}">
+              ${groupSet[id]}
+            </div>
+          `;
         }
       }
-    });
+
+      html += `</div>`;
+      return html;
+    }
 
     resultDiv.innerHTML = `
       <img src="${avatarUrl}">
       <h2>${user.name}</h2>
-      <p>User ID: ${user.id}</p>
-      <a href="https://www.roblox.com/users/${user.id}/profile" target="_blank">
-        <button>View Profile</button>
-      </a>
-      ${groupHTML}
+      <p>ID: ${user.id}</p>
+
+      ${buildSection("Clean", CLEAN, "clean")}
+      ${buildSection("Neutral", NEUTRAL, "neutral")}
+      ${buildSection("Opps", OPPS, "opp")}
     `;
 
   } catch (err) {
-    console.error(err);
     resultDiv.innerHTML = "Error loading user.";
   }
 }
