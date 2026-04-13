@@ -5,6 +5,8 @@ const groupsToCheck = [
   { name: "KADDIN", id: 16140130 }
 ];
 
+document.getElementById("searchBtn").addEventListener("click", searchUser);
+
 async function searchUser() {
   const username = document.getElementById("username").value.trim();
   const resultDiv = document.getElementById("result");
@@ -17,7 +19,7 @@ async function searchUser() {
   resultDiv.innerHTML = "Loading...";
 
   try {
-    // Get user ID
+    // Get user ID (proxy fix)
     const res = await fetch("https://corsproxy.io/?https://users.roblox.com/v1/usernames/users", {
       method: "POST",
       headers: {
@@ -46,7 +48,7 @@ async function searchUser() {
     const avatarData = await avatarRes.json();
     const avatarUrl = avatarData.data[0].imageUrl;
 
-    // Get user's groups
+    // Get groups
     const groupRes = await fetch(
       `https://corsproxy.io/?https://groups.roblox.com/v2/users/${user.id}/groups/roles`
     );
@@ -54,26 +56,24 @@ async function searchUser() {
     const groupData = await groupRes.json();
     const userGroups = groupData.data || [];
 
-    // Build group results
     let groupHTML = "<h3>Group Check</h3>";
 
     groupsToCheck.forEach(group => {
       const found = userGroups.find(g => g.group.id === group.id);
 
       if (!found) {
-        groupHTML += `<p style="color:lime;">${group.name}: Clean</p>`;
+        groupHTML += `<div class="group green">${group.name}: Clean</div>`;
       } else {
         const rank = found.role.rank;
 
         if (rank >= 200) {
-          groupHTML += `<p style="color:red;">${group.name}: High Rank (${found.role.name})</p>`;
+          groupHTML += `<div class="group red">${group.name}: High Rank (${found.role.name})</div>`;
         } else {
-          groupHTML += `<p style="color:yellow;">${group.name}: Member (${found.role.name})</p>`;
+          groupHTML += `<div class="group yellow">${group.name}: Member (${found.role.name})</div>`;
         }
       }
     });
 
-    // Display everything
     resultDiv.innerHTML = `
       <img src="${avatarUrl}" style="border-radius:50%; box-shadow:0 0 20px red;">
       <h2>${user.name}</h2>
