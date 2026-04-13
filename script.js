@@ -33,6 +33,7 @@ async function searchUser() {
   resultDiv.innerHTML = "Scanning...";
 
   try {
+    // USER
     const res = await fetch("https://corsproxy.io/?https://users.roblox.com/v1/usernames/users", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
@@ -40,15 +41,30 @@ async function searchUser() {
     });
 
     const data = await res.json();
+
+    if (!data.data || data.data.length === 0) {
+      resultDiv.innerHTML = "User not found.";
+      return;
+    }
+
     const user = data.data[0];
 
-    const avatarRes = await fetch(
-      `https://corsproxy.io/?https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${user.id}&size=150x150`
-    );
+    // AVATAR (FIXED)
+    let avatarUrl = "";
+    try {
+      const avatarRes = await fetch(
+        `https://corsproxy.io/?https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${user.id}&size=150x150&format=Png&isCircular=true`
+      );
 
-    const avatarData = await avatarRes.json();
-    const avatarUrl = avatarData.data[0].imageUrl;
+      const avatarData = await avatarRes.json();
+      avatarUrl = avatarData.data[0]?.imageUrl || "";
+    } catch {}
 
+    if (!avatarUrl) {
+      avatarUrl = "https://via.placeholder.com/150";
+    }
+
+    // GROUPS
     const groupRes = await fetch(
       `https://corsproxy.io/?https://groups.roblox.com/v2/users/${user.id}/groups/roles`
     );
@@ -57,22 +73,16 @@ async function searchUser() {
     const userGroups = groupData.data || [];
 
     function buildSection(title, groupSet, className) {
-      let html = `<div class="section-title">${title}</div>`;
-      html += `<div class="group-grid">`;
+      let html = `<div class="section-title">${title}</div><div class="group-grid">`;
 
       for (let id in groupSet) {
         const found = userGroups.find(g => g.group.id == id);
-
         if (found) {
-          html += `
-            <div class="group-card ${className}">
-              ${groupSet[id]}
-            </div>
-          `;
+          html += `<div class="group-card ${className}">${groupSet[id]}</div>`;
         }
       }
 
-      html += `</div>`;
+      html += "</div>";
       return html;
     }
 
@@ -87,6 +97,7 @@ async function searchUser() {
     `;
 
   } catch (err) {
+    console.error(err);
     resultDiv.innerHTML = "Error loading user.";
   }
 }
