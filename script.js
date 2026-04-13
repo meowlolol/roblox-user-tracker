@@ -19,17 +19,20 @@ async function searchUser() {
   resultDiv.innerHTML = "Loading...";
 
   try {
-    // Get user ID (proxy fix)
-    const res = await fetch("https://corsproxy.io/?https://users.roblox.com/v1/usernames/users", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        usernames: [username],
-        excludeBannedUsers: false
-      })
-    });
+    // Get user ID
+    const res = await fetch(
+      "https://corsproxy.io/?https://users.roblox.com/v1/usernames/users",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          usernames: [username],
+          excludeBannedUsers: false
+        })
+      }
+    );
 
     const data = await res.json();
 
@@ -40,7 +43,7 @@ async function searchUser() {
 
     const user = data.data[0];
 
-    // Get avatar
+    // Avatar
     const avatarRes = await fetch(
       `https://corsproxy.io/?https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${user.id}&size=150x150&format=Png`
     );
@@ -48,7 +51,7 @@ async function searchUser() {
     const avatarData = await avatarRes.json();
     const avatarUrl = avatarData.data[0].imageUrl;
 
-    // Get groups
+    // Groups
     const groupRes = await fetch(
       `https://corsproxy.io/?https://groups.roblox.com/v2/users/${user.id}/groups/roles`
     );
@@ -62,14 +65,14 @@ async function searchUser() {
       const found = userGroups.find(g => g.group.id === group.id);
 
       if (!found) {
-        groupHTML += `<div class="group green">${group.name}: Clean</div>`;
+        groupHTML += `<div style="color:lime;">${group.name}: Clean</div>`;
       } else {
         const rank = found.role.rank;
 
         if (rank >= 200) {
-          groupHTML += `<div class="group red">${group.name}: High Rank (${found.role.name})</div>`;
+          groupHTML += `<div style="color:red;">${group.name}: High Rank (${found.role.name})</div>`;
         } else {
-          groupHTML += `<div class="group yellow">${group.name}: Member (${found.role.name})</div>`;
+          groupHTML += `<div style="color:yellow;">${group.name}: Member (${found.role.name})</div>`;
         }
       }
     });
@@ -87,10 +90,5 @@ async function searchUser() {
   } catch (err) {
     console.error(err);
     resultDiv.innerHTML = "Error loading user.";
-  }
-}
-  } catch (err) {
-    console.error(err);
-    resultDiv.innerHTML = "Error loading user. Try again.";
   }
 }
