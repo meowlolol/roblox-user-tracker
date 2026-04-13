@@ -33,7 +33,7 @@ async function searchUser() {
   resultDiv.innerHTML = "Scanning...";
 
   try {
-    // USER
+    // GET USER
     const res = await fetch("https://corsproxy.io/?https://users.roblox.com/v1/usernames/users", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
@@ -49,16 +49,32 @@ async function searchUser() {
 
     const user = data.data[0];
 
-    // AVATAR (FIXED)
+    // AVATAR (PROXY + FALLBACK FIX)
     let avatarUrl = "";
+
     try {
       const avatarRes = await fetch(
         `https://corsproxy.io/?https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${user.id}&size=150x150&format=Png&isCircular=true`
       );
 
+      if (!avatarRes.ok) throw new Error();
+
       const avatarData = await avatarRes.json();
-      avatarUrl = avatarData.data[0]?.imageUrl || "";
-    } catch {}
+      avatarUrl = avatarData.data[0]?.imageUrl;
+
+    } catch {
+      try {
+        const avatarRes2 = await fetch(
+          `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${user.id}&size=150x150&format=Png&isCircular=true`
+        );
+
+        const avatarData2 = await avatarRes2.json();
+        avatarUrl = avatarData2.data[0]?.imageUrl;
+
+      } catch {
+        avatarUrl = "";
+      }
+    }
 
     if (!avatarUrl) {
       avatarUrl = "https://via.placeholder.com/150";
@@ -77,6 +93,7 @@ async function searchUser() {
 
       for (let id in groupSet) {
         const found = userGroups.find(g => g.group.id == id);
+
         if (found) {
           html += `<div class="group-card ${className}">${groupSet[id]}</div>`;
         }
@@ -86,6 +103,7 @@ async function searchUser() {
       return html;
     }
 
+    // DISPLAY
     resultDiv.innerHTML = `
       <img src="${avatarUrl}">
       <h2>${user.name}</h2>
